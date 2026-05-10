@@ -1,7 +1,9 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 
 app = Flask(__name__)
+app.secret_key = "cloud_expense_tracker_secret_key_123"
+
 
 # -----------------------------------
 # Database Initialization
@@ -46,12 +48,20 @@ init_db()
 # Home Page
 @app.route('/')
 def home():
+    # If user is already logged in, go directly to dashboard
+    if 'user_name' in session:
+        return redirect(url_for('dashboard'))
+
     return render_template('index.html')
 
 
 # Sign Up Page
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    # If user is already logged in, go directly to dashboard
+    if 'user_name' in session:
+        return redirect(url_for('dashboard'))
+
     message = ""
 
     if request.method == 'POST':
@@ -80,6 +90,10 @@ def signup():
 # Login Page
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, go directly to dashboard
+    if 'user_name' in session:
+        return redirect(url_for('dashboard'))
+
     message = ""
 
     if request.method == 'POST':
@@ -98,8 +112,12 @@ def login():
         conn.close()
 
         if user:
-            name = user[0]
-            return redirect(url_for('dashboard', name=name))
+            # Save login information in session
+            session['user_name'] = user[0]
+            session['user_email'] = email
+
+            # Redirect to dashboard
+            return redirect(url_for('dashboard'))
         else:
             message = "Invalid email or password."
 
@@ -109,7 +127,12 @@ def login():
 # Dashboard Page
 @app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
-    name = request.args.get('name', 'User')
+    # Check if user is logged in
+    if 'user_name' not in session:
+        return redirect(url_for('login'))
+
+    # Get logged-in user's name from session
+    name = session['user_name']
 
     conn = sqlite3.connect('expense_tracker.db')
     cursor = conn.cursor()
@@ -194,6 +217,10 @@ def dashboard():
 # Logout Route
 @app.route('/logout')
 def logout():
+    # Remove all session data
+    session.clear()
+
+    # Redirect to home page
     return redirect(url_for('home'))
 
 
