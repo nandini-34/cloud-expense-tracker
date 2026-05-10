@@ -4,20 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Expense Tracker</title>
-
-    <!-- Link CSS file from static folder -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
         <div class="card">
-            <h1>💰 Cloud Expense Tracker</h1>
-            <p>Track your daily expenses online and access them from anywhere.</p>
+            <h1>☁️ Cloud Expense Tracker</h1>
+            <p>
+                Track your daily expenses online and access your data from anywhere.
+            </p>
 
-            <div class="buttons">
-                <a href="/login" class="btn">Login</a>
-                <a href="/signup" class="btn btn-secondary">Sign Up</a>
-            </div>
+            <a href="/login" class="btn">🔐 Login</a>
+            <a href="/signup" class="btn secondary">📝 Sign Up</a>
         </div>
     </div>
 </body>

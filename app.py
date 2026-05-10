@@ -155,11 +155,25 @@ def dashboard():
             'description': row[2]
         })
 
+    # -----------------------------------
+    # Analytics Calculations
+    # -----------------------------------
+    transaction_count = len(expenses)
+
+    categories = set()
+    for expense in expenses:
+        categories.add(expense['category'])
+
+    category_count = len(categories)
+
+    # Render dashboard with analytics data
     return render_template(
         'dashboard.html',
         name=name,
         expenses=expenses,
-        total=total
+        total=total,
+        transaction_count=transaction_count,
+        category_count=category_count
     )
 
 
