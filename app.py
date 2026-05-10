@@ -161,19 +161,33 @@ def dashboard():
     transaction_count = len(expenses)
 
     categories = set()
+    category_totals = {}
+
     for expense in expenses:
-        categories.add(expense['category'])
+        category = expense['category']
+        categories.add(category)
+
+        if category in category_totals:
+            category_totals[category] += expense['amount']
+        else:
+            category_totals[category] = expense['amount']
 
     category_count = len(categories)
 
-    # Render dashboard with analytics data
+    # Prepare data for Chart.js
+    chart_labels = list(category_totals.keys())
+    chart_values = list(category_totals.values())
+
+    # Render dashboard with analytics and chart data
     return render_template(
         'dashboard.html',
         name=name,
         expenses=expenses,
         total=total,
         transaction_count=transaction_count,
-        category_count=category_count
+        category_count=category_count,
+        chart_labels=chart_labels,
+        chart_values=chart_values
     )
 
 

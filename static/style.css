@@ -216,3 +216,16 @@ h2[style*="Total Expenses"] {
     font-weight: 700;
     margin: 0;
 }
+/* Chart Container */
+.chart-card {
+    margin: 30px 0;
+    padding: 24px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.chart-card canvas {
+    max-width: 100%;
+    margin-top: 20px;
+}
