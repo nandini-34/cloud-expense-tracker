@@ -48,11 +48,8 @@ init_db()
 # Home Page
 @app.route('/')
 def home():
-    # If user is already logged in, go directly to dashboard
-    if 'user_name' in session:
-        return redirect(url_for('dashboard'))
-
-    return render_template('index.html')
+    return render_template('index.html')  # ALWAYS show home page first
+    
 
 
 # Sign Up Page
