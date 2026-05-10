@@ -4,19 +4,452 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Expense Tracker</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:        #080b14;
+            --bg2:       #0d1120;
+            --bg3:       #111827;
+            --neon-cyan: #00f5ff;
+            --neon-pink: #ff2d78;
+            --neon-purp: #bf5fff;
+            --neon-grn:  #00ff9d;
+            --neon-amb:  #ffb800;
+            --card-bg:   rgba(255,255,255,0.04);
+            --card-bd:   rgba(255,255,255,0.08);
+            --text:      #f0f4ff;
+            --muted:     rgba(240,244,255,0.55);
+            --more-muted:rgba(240,244,255,0.30);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Sora', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ── Grid background ── */
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0;
+            background-image:
+                linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        /* ── Glow orbs ── */
+        .orb { position: fixed; border-radius: 50%; filter: blur(110px); pointer-events: none; z-index: 0; }
+        .orb-1 { width: 600px; height: 600px; background: rgba(0,245,255,0.12); top: -200px; left: -200px; }
+        .orb-2 { width: 500px; height: 500px; background: rgba(255,45,120,0.10); bottom: -150px; right: -150px; }
+        .orb-3 { width: 350px; height: 350px; background: rgba(191,95,255,0.10); top: 40%; left: 60%; }
+
+        /* ── Navbar ── */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 52px;
+            background: rgba(8,11,20,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-bd);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 10px;
+            font-size: 1.05rem; font-weight: 700;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purp));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .brand-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purp));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; flex-shrink: 0;
+        }
+        .nav-links { display: flex; align-items: center; gap: 10px; }
+        .btn {
+            padding: 9px 22px; border-radius: 8px;
+            font-family: 'Sora', sans-serif; font-size: 0.83rem; font-weight: 600;
+            cursor: pointer; text-decoration: none; transition: all 0.2s; border: none;
+        }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(0,245,255,0.3);
+            color: var(--neon-cyan);
+        }
+        .btn-ghost:hover { background: rgba(0,245,255,0.08); border-color: var(--neon-cyan); }
+        .btn-neon {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purp));
+            color: #080b14; font-weight: 700;
+            box-shadow: 0 0 20px rgba(0,245,255,0.35);
+        }
+        .btn-neon:hover { box-shadow: 0 0 32px rgba(0,245,255,0.55); transform: translateY(-2px); }
+
+        /* ── Hero ── */
+        .hero {
+            position: relative; z-index: 1;
+            text-align: center; padding: 110px 24px 70px;
+        }
+
+        .live-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: rgba(0,255,157,0.08);
+            border: 1px solid rgba(0,255,157,0.3);
+            padding: 6px 18px; border-radius: 999px;
+            font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--neon-grn); margin-bottom: 32px;
+        }
+        .live-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--neon-grn);
+            box-shadow: 0 0 8px var(--neon-grn);
+            animation: blink 1.4s ease-in-out infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        h1 {
+            font-size: clamp(2.6rem, 5.5vw, 4.4rem);
+            font-weight: 800; line-height: 1.1;
+            letter-spacing: -0.03em; margin-bottom: 28px;
+        }
+        .grad-text {
+            background: linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-purp) 50%, var(--neon-pink) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 1.08rem; color: var(--muted);
+            max-width: 520px; margin: 0 auto 48px; line-height: 1.75;
+        }
+
+        .hero-btns { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 72px; }
+        .btn-hero-main {
+            padding: 16px 40px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purp));
+            color: #080b14; font-weight: 800; font-size: 0.98rem;
+            text-decoration: none; transition: all 0.22s;
+            box-shadow: 0 0 30px rgba(0,245,255,0.4), 0 0 60px rgba(191,95,255,0.2);
+        }
+        .btn-hero-main:hover { transform: translateY(-3px); box-shadow: 0 0 50px rgba(0,245,255,0.55), 0 0 80px rgba(191,95,255,0.3); }
+        .btn-hero-sec {
+            padding: 16px 40px; border-radius: 10px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255,45,120,0.4);
+            color: var(--neon-pink); font-weight: 700; font-size: 0.98rem;
+            text-decoration: none; transition: all 0.22s;
+            backdrop-filter: blur(8px);
+        }
+        .btn-hero-sec:hover { background: rgba(255,45,120,0.08); transform: translateY(-3px); box-shadow: 0 0 24px rgba(255,45,120,0.3); }
+
+        /* ── Stats bar ── */
+        .stats-bar {
+            display: flex; justify-content: center;
+            gap: 0; max-width: 620px; margin: 0 auto 100px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-bd);
+            border-radius: 16px; overflow: hidden;
+            backdrop-filter: blur(12px);
+        }
+        .stat { flex: 1; text-align: center; padding: 22px 12px; border-right: 1px solid var(--card-bd); }
+        .stat:last-child { border-right: none; }
+        .stat-val { font-size: 1.5rem; margin-bottom: 4px; }
+        .stat-lbl { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.04em; }
+
+        /* ── Section titles ── */
+        .sec-label {
+            text-align: center; font-size: 0.72rem; font-weight: 600;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--neon-cyan); margin-bottom: 14px;
+        }
+        .sec-title {
+            text-align: center; font-size: clamp(1.6rem, 3vw, 2.2rem);
+            font-weight: 700; margin-bottom: 12px; line-height: 1.25;
+        }
+        .sec-sub { text-align: center; color: var(--muted); font-size: 0.95rem; margin-bottom: 52px; }
+
+        /* ── Features ── */
+        .features { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 0 24px 100px; }
+        .feat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 16px; }
+        .feat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-bd);
+            border-radius: 18px; padding: 30px 26px;
+            backdrop-filter: blur(10px);
+            transition: transform 0.22s, border-color 0.22s, box-shadow 0.22s;
+            position: relative; overflow: hidden;
+        }
+        .feat-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 18px;
+            background: linear-gradient(135deg, var(--glow-a, rgba(0,245,255,0.06)), var(--glow-b, rgba(191,95,255,0.06)));
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .feat-card:hover { transform: translateY(-6px); border-color: var(--hover-bd, rgba(0,245,255,0.4)); box-shadow: 0 0 30px var(--hover-glow, rgba(0,245,255,0.12)); }
+        .feat-card:hover::before { opacity: 1; }
+        .feat-card:nth-child(1) { --hover-bd:rgba(0,245,255,0.4); --hover-glow:rgba(0,245,255,0.1); }
+        .feat-card:nth-child(2) { --hover-bd:rgba(191,95,255,0.4); --hover-glow:rgba(191,95,255,0.1); }
+        .feat-card:nth-child(3) { --hover-bd:rgba(255,45,120,0.4); --hover-glow:rgba(255,45,120,0.1); }
+        .feat-card:nth-child(4) { --hover-bd:rgba(0,255,157,0.4); --hover-glow:rgba(0,255,157,0.1); }
+        .feat-card:nth-child(5) { --hover-bd:rgba(255,184,0,0.4); --hover-glow:rgba(255,184,0,0.1); }
+        .feat-card:nth-child(6) { --hover-bd:rgba(0,245,255,0.4); --hover-glow:rgba(0,245,255,0.1); }
+        .feat-icon {
+            width: 48px; height: 48px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-bottom: 18px;
+            position: relative; z-index: 1;
+        }
+        .feat-title { font-size: 1rem; font-weight: 600; margin-bottom: 10px; position: relative; z-index: 1; }
+        .feat-desc { font-size: 0.84rem; color: var(--muted); line-height: 1.65; position: relative; z-index: 1; }
+
+        /* ── Steps ── */
+        .how { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 0 24px 100px; }
+        .steps-row { display: flex; justify-content: center; gap: 0; flex-wrap: wrap; position: relative; }
+        .steps-row::before {
+            content: ''; position: absolute;
+            top: 28px; left: 10%; right: 10%; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), var(--neon-purp), var(--neon-pink), transparent);
+        }
+        .step { flex: 1; min-width: 140px; max-width: 200px; text-align: center; padding: 0 12px; }
+        .step-circle {
+            width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; font-weight: 700; position: relative;
+        }
+        .step:nth-child(1) .step-circle { background: rgba(0,245,255,0.12); border: 1.5px solid var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0,245,255,0.25); }
+        .step:nth-child(2) .step-circle { background: rgba(191,95,255,0.12); border: 1.5px solid var(--neon-purp); color: var(--neon-purp); box-shadow: 0 0 20px rgba(191,95,255,0.25); }
+        .step:nth-child(3) .step-circle { background: rgba(255,45,120,0.12); border: 1.5px solid var(--neon-pink); color: var(--neon-pink); box-shadow: 0 0 20px rgba(255,45,120,0.25); }
+        .step:nth-child(4) .step-circle { background: rgba(0,255,157,0.12); border: 1.5px solid var(--neon-grn); color: var(--neon-grn); box-shadow: 0 0 20px rgba(0,255,157,0.25); }
+        .step-name { font-size: 0.88rem; font-weight: 600; margin-bottom: 6px; }
+        .step-info { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
+
+        /* ── Cloud tech ── */
+        .cloud-sec {
+            position: relative; z-index: 1;
+            border-top: 1px solid var(--card-bd); border-bottom: 1px solid var(--card-bd);
+            background: linear-gradient(180deg, rgba(0,245,255,0.03) 0%, rgba(191,95,255,0.03) 100%);
+            padding: 80px 24px; text-align: center; margin-bottom: 80px;
+        }
+        .tech-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 0; }
+        .tech-pill {
+            padding: 10px 20px; border-radius: 999px; font-size: 0.8rem; font-weight: 600;
+            display: flex; align-items: center; gap: 8px; backdrop-filter: blur(8px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .tech-pill:hover { transform: translateY(-2px); }
+        .pill-c { background: rgba(0,245,255,0.08); border: 1px solid rgba(0,245,255,0.3); color: var(--neon-cyan); }
+        .pill-p { background: rgba(191,95,255,0.08); border: 1px solid rgba(191,95,255,0.3); color: var(--neon-purp); }
+        .pill-g { background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.3); color: var(--neon-grn); }
+        .pill-a { background: rgba(255,184,0,0.08); border: 1px solid rgba(255,184,0,0.3); color: var(--neon-amb); }
+        .pill-r { background: rgba(255,45,120,0.08); border: 1px solid rgba(255,45,120,0.3); color: var(--neon-pink); }
+
+        /* ── CTA ── */
+        .cta {
+            position: relative; z-index: 1;
+            text-align: center; padding: 0 24px 100px;
+        }
+        .cta-card {
+            max-width: 700px; margin: 0 auto;
+            background: var(--card-bg);
+            border: 1px solid var(--card-bd);
+            border-radius: 24px; padding: 64px 40px;
+            backdrop-filter: blur(12px);
+            position: relative; overflow: hidden;
+        }
+        .cta-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 24px;
+            background: linear-gradient(135deg, rgba(0,245,255,0.06), rgba(191,95,255,0.06), rgba(255,45,120,0.06));
+        }
+        .cta-card h2 { font-size: 2.2rem; font-weight: 800; margin-bottom: 16px; position: relative; z-index: 1; }
+        .cta-card p { color: var(--muted); margin-bottom: 40px; font-size: 1rem; position: relative; z-index: 1; }
+        .cta-btns { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; position: relative; z-index: 1; }
+
+        /* ── Footer ── */
+        footer {
+            position: relative; z-index: 1;
+            text-align: center; padding: 28px;
+            border-top: 1px solid var(--card-bd);
+            font-size: 0.78rem; color: var(--more-muted);
+        }
+        footer span { color: var(--neon-cyan); }
+
+        @media (max-width: 640px) {
+            nav { padding: 16px 20px; }
+            .hero { padding: 70px 20px 50px; }
+            .steps-row::before { display: none; }
+            .cta-card { padding: 40px 24px; }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="card">
-            <h1>☁️ Cloud Expense Tracker</h1>
-            <p>
-                Track your daily expenses online and access your data from anywhere.
-            </p>
 
-            <a href="/login" class="btn">🔐 Login</a>
-            <a href="/signup" class="btn secondary">📝 Sign Up</a>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- ── Nav ── -->
+    <nav>
+        <div class="nav-brand">
+            <div class="brand-icon">💸</div>
+            CloudExpense
         </div>
-    </div>
+        <div class="nav-links">
+            <a href="/login" class="btn btn-ghost">Login</a>
+            <a href="/signup" class="btn btn-neon">Get Started →</a>
+        </div>
+    </nav>
+
+    <!-- ── Hero ── -->
+    <section class="hero">
+        <div class="live-badge"><span class="live-dot"></span> Live on Render Cloud</div>
+
+        <h1>
+            Your money.<br>
+            <span class="grad-text">Tracked. Anywhere.</span>
+        </h1>
+
+        <p class="hero-sub">
+            A cloud-powered expense tracker with real-time charts, budget alerts,
+            and AI insights — all from any device, anywhere in the world.
+        </p>
+
+        <div class="hero-btns">
+            <a href="/signup" class="btn-hero-main">Start tracking free →</a>
+            <a href="/login" class="btn-hero-sec">Login to dashboard</a>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-val" style="color:var(--neon-cyan)">☁️</div>
+                <div class="stat-lbl">Cloud hosted</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" style="color:var(--neon-purp)">🔒</div>
+                <div class="stat-lbl">Secure auth</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" style="color:var(--neon-pink)">📊</div>
+                <div class="stat-lbl">Live charts</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" style="color:var(--neon-grn)">⚡</div>
+                <div class="stat-lbl">Real-time</div>
+            </div>
+            <div class="stat">
+                <div class="stat-val" style="color:var(--neon-amb)">🤖</div>
+                <div class="stat-lbl">AI insights</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Features ── -->
+    <section class="features">
+        <div class="sec-label">Features</div>
+        <h2 class="sec-title">Everything you need to spend smarter</h2>
+        <p class="sec-sub">Packed with tools that make expense tracking actually enjoyable.</p>
+
+        <div class="feat-grid">
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(0,245,255,0.12)">📊</div>
+                <div class="feat-title" style="color:var(--neon-cyan)">Live spending charts</div>
+                <div class="feat-desc">Pie and bar charts update the moment you add an expense. See exactly where every rupee goes.</div>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(191,95,255,0.12)">🗂️</div>
+                <div class="feat-title" style="color:var(--neon-purp)">Smart categories</div>
+                <div class="feat-desc">Food, Travel, Shopping, Bills and more. Filter and view any category with one click.</div>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(255,45,120,0.12)">🎯</div>
+                <div class="feat-title" style="color:var(--neon-pink)">Budget alerts</div>
+                <div class="feat-desc">Set monthly limits per category. Get neon-red warnings before you overspend.</div>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(0,255,157,0.12)">🔐</div>
+                <div class="feat-title" style="color:var(--neon-grn)">Secure accounts</div>
+                <div class="feat-desc">Session-based authentication keeps your data private. Only you can see your expenses.</div>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(255,184,0,0.12)">📥</div>
+                <div class="feat-title" style="color:var(--neon-amb)">Export to CSV</div>
+                <div class="feat-desc">Download all expenses as a spreadsheet in one click — perfect for reports and budgeting.</div>
+            </div>
+            <div class="feat-card">
+                <div class="feat-icon" style="background:rgba(0,245,255,0.12)">🤖</div>
+                <div class="feat-title" style="color:var(--neon-cyan)">AI spending insights</div>
+                <div class="feat-desc">Get personalized tips and spending patterns powered by AI — understand your habits instantly.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── How it works ── -->
+    <section class="how">
+        <div class="sec-label">How it works</div>
+        <h2 class="sec-title">Up and running in 60 seconds</h2>
+        <p class="sec-sub">No complicated setup. Just sign up and start tracking.</p>
+        <div class="steps-row">
+            <div class="step">
+                <div class="step-circle">1</div>
+                <div class="step-name">Sign up</div>
+                <div class="step-info">Create your free cloud account instantly</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">2</div>
+                <div class="step-name">Add expenses</div>
+                <div class="step-info">Log amount, category & description</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">3</div>
+                <div class="step-name">See charts</div>
+                <div class="step-info">Visual breakdown updates live</div>
+            </div>
+            <div class="step">
+                <div class="step-circle">4</div>
+                <div class="step-name">Stay on budget</div>
+                <div class="step-info">Alerts fire when you're close to limits</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Cloud tech ── -->
+    <section class="cloud-sec">
+        <div class="sec-label">Tech stack</div>
+        <h2 class="sec-title">Built on real cloud infrastructure</h2>
+        <p class="sec-sub" style="margin-bottom:36px">Demonstrates industry-standard cloud computing concepts — great for your project report.</p>
+        <div class="tech-pills">
+            <div class="tech-pill pill-c">🚀 Render PaaS</div>
+            <div class="tech-pill pill-p">🐍 Python Flask</div>
+            <div class="tech-pill pill-g">🗄️ Cloud Database</div>
+            <div class="tech-pill pill-c">🌐 Public HTTPS URL</div>
+            <div class="tech-pill pill-a">📦 GitHub CI/CD</div>
+            <div class="tech-pill pill-r">🔒 Session Auth</div>
+            <div class="tech-pill pill-p">🐳 Docker ready</div>
+            <div class="tech-pill pill-g">⚡ REST API</div>
+        </div>
+    </section>
+
+    <!-- ── CTA ── -->
+    <section class="cta">
+        <div class="cta-card">
+            <h2>Ready to <span class="grad-text">take control?</span></h2>
+            <p>Join and start tracking your expenses in the cloud today.<br>It's completely free — no credit card needed.</p>
+            <div class="cta-btns">
+                <a href="/signup" class="btn-hero-main">Create free account →</a>
+                <a href="/login" class="btn-hero-sec">I already have an account</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ── -->
+    <footer>
+        <p>💸 <span>CloudExpense</span> &nbsp;·&nbsp; Built with Flask &amp; deployed on Render &nbsp;·&nbsp; Cloud Computing Project 2026</p>
+    </footer>
+
 </body>
 </html>
